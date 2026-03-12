@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import net.objecthunter.exp4j.ExpressionBuilder
 
 class MainActivity : ComponentActivity() {
 
@@ -186,72 +187,19 @@ fun calculate(expr: String): String {
 
     return try {
 
-        val expression = expr.replace("x", "*")
+        val expression = expr
+            .replace("x", "*")   // vì nút giao diện dùng x
 
-        val result = object {
+        val result = ExpressionBuilder(expression)
+            .build()
+            .evaluate()
 
-            var pos = -1
-            var ch = 0
-
-            fun nextChar() {
-                ch = if (++pos < expression.length) expression[pos].code else -1
-            }
-
-            fun eat(charToEat: Int): Boolean {
-                while (ch == ' '.code) nextChar()
-                if (ch == charToEat) {
-                    nextChar()
-                    return true
-                }
-                return false
-            }
-
-            fun parse(): Double {
-                nextChar()
-                val x = parseExpression()
-                return x
-            }
-
-            fun parseExpression(): Double {
-                var x = parseTerm()
-                while (true) {
-                    when {
-                        eat('+'.code) -> x += parseTerm()
-                        eat('-'.code) -> x -= parseTerm()
-                        else -> return x
-                    }
-                }
-            }
-
-            fun parseTerm(): Double {
-                var x = parseFactor()
-                while (true) {
-                    when {
-                        eat('*'.code) -> x *= parseFactor()
-                        eat('/'.code) -> x /= parseFactor()
-                        else -> return x
-                    }
-                }
-            }
-
-            fun parseFactor(): Double {
-
-                if (eat('+'.code)) return parseFactor()
-                if (eat('-'.code)) return -parseFactor()
-
-                val startPos = pos
-
-                if (ch >= '0'.code && ch <= '9'.code || ch == '.'.code) {
-                    while (ch >= '0'.code && ch <= '9'.code || ch == '.'.code) nextChar()
-                    return expression.substring(startPos, pos).toDouble()
-                }
-
-                throw RuntimeException("Error")
-            }
-
-        }.parse()
-
-        result.toString()
+        // nếu là số nguyên thì bỏ .0
+        if (result % 1 == 0.0) {
+            result.toInt().toString()
+        } else {
+            result.toString()
+        }
 
     } catch (e: Exception) {
         "Error"
